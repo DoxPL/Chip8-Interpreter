@@ -35,16 +35,6 @@ void Chip8::load(char* filename)
 	
 	if(file.good())
 	{
-		/*char *buffer;
-		int size = file.tellg();
-		buffer = new char[size];
-		file.read(buffer, size);
-		
-		for(int i=0; i < size; i++)
-		{
-			this->memory[0x200 + i] = buffer[i];
-			cout << "\nBUFFER: " << (int)buffer[i] << " END\n";
-		} */
 		ifstream file(filename, ios::binary);
 		char tmp;
 		for(int i=0x200; !file.eof(), i < 4096; i++)
@@ -52,11 +42,9 @@ void Chip8::load(char* filename)
 			file.get(tmp);
 			this->memory[i] = tmp;
 		}
-		//cout << "File loaded\nSize is: " << size << "B";
-		cout << "\nPress any button to start";
+		cout << "\nPress any key to start";
 		getch();
 		scrClear();
-	//	delete []buffer;
 		file.close();
 	}
 	else
@@ -85,7 +73,7 @@ void Chip8::cpuCycle()
 					draw();
 					break;
 				case 0x000E:
-					this->counter = this->stack[--this->stackPointer];
+					this->counter = this->stack[this->stackPointer--];
 					break;
 				default:
 					stop(opcode);
@@ -96,8 +84,8 @@ void Chip8::cpuCycle()
 			this->counter = nnn;
 			break;
 		case 0x2000:
-			this->stack[this->stackPointer++] = this->counter;
-			this->counter = opcode & 0x0FFF; //nnn
+			this->stack[++this->stackPointer] = this->counter;
+			this->counter = nnn;
 			break;
 		case 0x3000:
 			if(this->V[x] == nn)
@@ -158,8 +146,8 @@ void Chip8::cpuCycle()
 					this->V[0xF] = (this->V[x] > this->V[y]) ? 1 : 0;
 					break;
 				case 0x0006:
-					this->V[x] >>= 1;
 					this->V[0xF] = (this->V[x] & 0x1 == 1) ? 1 : 0;
+					this->V[x] >>= 1;
 					break;
 				case 0x0007:
 					this->V[x] = this->V[y] - this->V[x];
@@ -283,32 +271,30 @@ void Chip8::draw()
 
 void Chip8::drawSprite()
 {
-unsigned short x = V[(opcode & 0x0F00) >> 8];
-  unsigned short y = V[(opcode & 0x00F0) >> 4];
-  unsigned short height = opcode & 0x000F;
-  unsigned short pixel;
+	unsigned short x = V[(this->opcode & 0x0F00) >> 8];
+	unsigned short y = V[(this->opcode & 0x00F0) >> 4];
+  	unsigned short height = this->opcode & 0x000F;
+  	unsigned short pixel;
  
-  V[0xF] = 0;
+  	V[0xF] = 0;
 	for (int yline = 0; yline < height; yline++)
-  {
-    pixel = this->memory[this->index + yline];
-    for(int xline = 0; xline < 8; xline++)
-    {
-      if((pixel & (0x80 >> xline)) != 0)
-      {
-        if(mtx[(x + xline + ((y + yline) * 64))] == 1)
-          V[0xF] = 1;                                 
-        mtx[x + xline + ((y + yline) * 64)] ^= 1;
-      }
-    }
-  }
- 
-  this->drawStatus = true;
- //this->counter += 2;
+  	{
+	    pixel = this->memory[this->index + yline];
+	    for(int xline = 0; xline < 8; xline++)
+	    {
+	      	if((pixel & (0x80 >> xline)) != 0)
+	     	{
+	        	if(mtx[(x + xline + ((y + yline) * 64))] == 1)
+	          		V[0xF] = 1;                                 
+	       		mtx[x + xline + ((y + yline) * 64)] ^= 1;
+	      	}
+	    }
+ 	}
+  	this->drawStatus = true;
 }
 
 void Chip8::memClear()
-{
+{		
 	for(int i=0; i < 4096; i++)
 	{
 		this->memory[i] = 0;
