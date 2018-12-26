@@ -13,15 +13,17 @@ class Chip8
 		unsigned char keyState[16];
 		bool drawStatus;
 		bool run;
-		char** mtx;
+		char mtx[64 * 32];
 	public:
 		void init();
 		void load(char* filename);
 		void draw();
+		void drawSprite();
 		void cpuCycle();
 		void memClear();
 		void scrClear();
 		void onKeyPressed();
+		void stop(short opcode);
 		bool getDrawStatus();
 		bool getRunState();
 		~Chip8();

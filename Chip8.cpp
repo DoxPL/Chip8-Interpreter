@@ -19,10 +19,11 @@ void Chip8::init()
 	this->index = 0;
 	this->stackPointer = 0;
 	this->drawStatus = false;
-	this->mtx = new char*[32];
-	for(int i=0; i < 32; i++)
+	
+	for(int i=0; i < 16; i++)
 	{
-		this->mtx[i] = new char[64];
+		V[i] = 0;
+		stack[i] = 0;
 	}
 	//load font
 }
@@ -34,7 +35,7 @@ void Chip8::load(char* filename)
 	
 	if(file.good())
 	{
-		char *buffer;
+		/*char *buffer;
 		int size = file.tellg();
 		buffer = new char[size];
 		file.read(buffer, size);
@@ -42,12 +43,20 @@ void Chip8::load(char* filename)
 		for(int i=0; i < size; i++)
 		{
 			this->memory[0x200 + i] = buffer[i];
+			cout << "\nBUFFER: " << (int)buffer[i] << " END\n";
+		} */
+		ifstream file(filename, ios::binary);
+		char tmp;
+		for(int i=0x200; !file.eof(), i < 4096; i++)
+		{
+			file.get(tmp);
+			this->memory[i] = tmp;
 		}
-		cout << "File loaded\nSize is: " << size << "B";
+		//cout << "File loaded\nSize is: " << size << "B";
 		cout << "\nPress any button to start";
 		getch();
 		scrClear();
-		delete []buffer;
+	//	delete []buffer;
 		file.close();
 	}
 	else
@@ -64,7 +73,8 @@ void Chip8::cpuCycle()
 	int n = opcode & 0x000F;
 	int x = this->V[opcode] & 0x0F00 >> 8;
 	int y = this->V[opcode] & 0x00F0 >> 4;
-
+	int v_i = 0;
+	this->counter += 2;
 	switch(opcode & 0xF000)
 	{
 		case 0x0000:
@@ -72,9 +82,13 @@ void Chip8::cpuCycle()
 			{
 				case 0x0000:
 					scrClear();
+					draw();
 					break;
 				case 0x000E:
-					this->counter = this->stack[this->stackPointer--];
+					this->counter = this->stack[--this->stackPointer];
+					break;
+				default:
+					stop(opcode);
 					break;
 			}
 			break;
@@ -83,7 +97,7 @@ void Chip8::cpuCycle()
 			break;
 		case 0x2000:
 			this->stack[this->stackPointer++] = this->counter;
-			this->counter = opcode & 0x0FFF;
+			this->counter = opcode & 0x0FFF; //nnn
 			break;
 		case 0x3000:
 			if(this->V[x] == nn)
@@ -125,21 +139,40 @@ void Chip8::cpuCycle()
 					this->V[x] = this->V[x] ^ this->V[y];
 					break;
 				case 0x0004:
-					this->V[x] += this->V[y];
-					this->V[0xF] = (this->V[x] > 0xFF) ? 1 : 0;		
+					if((this->V[x] + this->V[y]) > 255)
+					{
+						this->V[0xF] = 1;
+					}
+					else
+					{
+						this->V[x] += this->V[y];
+						this->V[0xF] = 0;
+					}
+				
+					//this->V[0xF] = (this->V[x] > 0xFF) ? 1 : 0;		
 					break;
 				case 0x0005:
 					this->V[x] -= this->V[y];
+					if(this->V[x] < 0)
+						this->V[x] += 256;
 					this->V[0xF] = (this->V[x] > this->V[y]) ? 1 : 0;
 					break;
 				case 0x0006:
-					this->V[x] >> 1;
+					this->V[x] >>= 1;
+					this->V[0xF] = (this->V[x] & 0x1 == 1) ? 1 : 0;
 					break;
 				case 0x0007:
 					this->V[x] = this->V[y] - this->V[x];
+					if(this->V[x] < 0)
+						this->V[x] += 256;
+					this->V[0xF] = (this->V[y] > this->V[x]) ? 1 : 0;
 					break;
-				case 0x000F:
-					this->V[x] << 1;
+				case 0x000E:
+					this->V[0xF] = this->V[x] & 0x80; //sprawdzic 
+					this->V[x] <<= 1;
+					break;
+				default:
+					stop(opcode);
 					break;
 			}
 			break;
@@ -158,10 +191,13 @@ void Chip8::cpuCycle()
 			this->counter = this->V[0] + nnn;
 			break;
 		case 0xC000:
-			this->V[x] = rand() % 256 & nn;
+			this->V[x] = (rand() % 256) & nn;
 			break;
 		case 0xD000:
-			draw();
+			drawSprite();
+			break;
+		case 0xE000:
+			//keyboard
 			break;
 		case 0xF000:
 			switch(opcode & 0x00FF)
@@ -181,12 +217,38 @@ void Chip8::cpuCycle()
 					this->index += this->V[x];
 					break;
 				case 0x0029:
+					this->index = this->V[x] * 5;
+					break;
+				case 0x0033:
+					
+                    for(int i = 0; i < 3; i++)
+                    {
+                    	this->memory[this->index + 2 - i] = this->V[x] % 10;
+                        this->V[x] /= 10;
+                    }
+					break;
+					
+				case 0x0055:
+					for(int i=this->index; i < x; i++)
+					{
+						this->memory[i] = V[v_i];
+						v_i++;
+					}
+					break;
+				case 0x0065:
+					for(int i=this->index; i < x; i++)
+					{
+						this->V[v_i] = this->memory[i];
+						v_i++;
+					}
+					break;
+				default:
+					stop(opcode);
 					break;
 			}
 			break;
 		default:
-			cout << "Unsupported operation.\n";
-			this->run = false;
+			stop(opcode);
 			break;
 	}
 	if(this->delayTimer > 0)
@@ -205,15 +267,44 @@ void Chip8::cpuCycle()
 
 void Chip8::draw()
 {
-	for(int y = 0; y < 32; y++)
+	for(int yline = 0; yline < 32; ++yline)
 	{
-		for(int x = 0; x < 64; x++)
+		for(int xline = 0; xline < 64; ++xline)
 		{
-			cout << (char) 219;
+			if(this->mtx[xline + (64 * yline)])
+				cout << (char) 219;
+			else
+				cout << ' ';
 		}
 		cout << "\n";
 	}
-	
+	this->drawStatus = false;
+}
+
+void Chip8::drawSprite()
+{
+unsigned short x = V[(opcode & 0x0F00) >> 8];
+  unsigned short y = V[(opcode & 0x00F0) >> 4];
+  unsigned short height = opcode & 0x000F;
+  unsigned short pixel;
+ 
+  V[0xF] = 0;
+	for (int yline = 0; yline < height; yline++)
+  {
+    pixel = this->memory[this->index + yline];
+    for(int xline = 0; xline < 8; xline++)
+    {
+      if((pixel & (0x80 >> xline)) != 0)
+      {
+        if(mtx[(x + xline + ((y + yline) * 64))] == 1)
+          V[0xF] = 1;                                 
+        mtx[x + xline + ((y + yline) * 64)] ^= 1;
+      }
+    }
+  }
+ 
+  this->drawStatus = true;
+ //this->counter += 2;
 }
 
 void Chip8::memClear()
@@ -232,6 +323,12 @@ void Chip8::memClear()
 void Chip8::scrClear()
 {
 	system("cls");
+}
+
+void Chip8::stop(short opcode)
+{
+	cout << "Unsupported operation " << hex << opcode << "\n";
+	this->run = false;
 }
 
 bool Chip8::getDrawStatus()
@@ -261,8 +358,5 @@ void Chip8::onKeyPressed()
 
 Chip8::~Chip8()
 {
-	for(int i=0; i < 32; i++)
-		delete mtx[i];
-	delete []mtx;
 	cout << "Application stopped";
 }
