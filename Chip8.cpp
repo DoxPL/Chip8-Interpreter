@@ -7,6 +7,26 @@
 #include <ctime>
 using namespace std;
 
+unsigned char fontSet[80] = 
+{
+	0xF0, 0x90, 0x90, 0x90, 0xF0, //0
+	0x20, 0x60, 0x20, 0x20, 0x70, //1
+	0xF0, 0x10, 0xF0, 0x80, 0xF0, //2
+	0xF0, 0x10, 0xF0, 0x10, 0xF0, //3
+	0x90, 0x90, 0xF0, 0x10, 0x10, //4
+	0xF0, 0x80, 0xF0, 0x10, 0xF0, //5
+	0xF0, 0x80, 0xF0, 0x90, 0xF0, //6
+	0xF0, 0x10, 0x20, 0x40, 0x40, //7
+	0xF0, 0x90, 0xF0, 0x90, 0xF0, //8
+	0xF0, 0x90, 0xF0, 0x10, 0xF0, //9
+	0xF0, 0x90, 0xF0, 0x90, 0x90, //A
+	0xE0, 0x90, 0xE0, 0x90, 0xE0, //B
+	0xF0, 0x80, 0x80, 0x80, 0xF0, //C
+	0xE0, 0x90, 0x90, 0x90, 0xE0, //D
+	0xF0, 0x80, 0xF0, 0x80, 0xF0, //E
+	0xF0, 0x80, 0xF0, 0x80, 0x80  //F
+};
+
 void Chip8::init()
 {
 	srand(time(NULL));
@@ -25,7 +45,8 @@ void Chip8::init()
 		V[i] = 0;
 		stack[i] = 0;
 	}
-	//load font
+	
+	memcpy(this->memory, fontSet, sizeof(fontSet)); 
 }
 
 void Chip8::load(char* filename)
@@ -59,9 +80,9 @@ void Chip8::cpuCycle()
 	int nnn = opcode & 0x0FFF;
 	int nn = opcode & 0x00FF;
 	int n = opcode & 0x000F;
-	int x = this->V[opcode] & 0x0F00 >> 8;
-	int y = this->V[opcode] & 0x00F0 >> 4;
 	int v_i = 0;
+	this->x = this->V[opcode] & 0x0F00 >> 8;
+	this->y = this->V[opcode] & 0x00F0 >> 4;
 	this->counter += 2;
 	switch(opcode & 0xF000)
 	{
@@ -135,9 +156,7 @@ void Chip8::cpuCycle()
 					{
 						this->V[x] += this->V[y];
 						this->V[0xF] = 0;
-					}
-				
-					//this->V[0xF] = (this->V[x] > 0xFF) ? 1 : 0;		
+					}	
 					break;
 				case 0x0005:
 					this->V[x] -= this->V[y];
@@ -186,6 +205,17 @@ void Chip8::cpuCycle()
 			break;
 		case 0xE000:
 			//keyboard
+			switch(opcode & 0x00FF)
+			{
+				case 0x009E:
+					if(this->keyStatus[this->x] == 1)
+						this->counter += 2;
+					break;
+				case 0x00A1:
+					if(this->keyStatus[this->x] != 1)
+						this->counter += 2;
+					break;
+			}
 			break;
 		case 0xF000:
 			switch(opcode & 0x00FF)
@@ -194,7 +224,18 @@ void Chip8::cpuCycle()
 					this->V[x] = this->delayTimer;
 					break;
 				case 0x000A:
+				{
+					bool keyPressed = false;
+					for(int i = 0; i < 16; i++)
+					{
+						if(this->keyStatus[i] == 1)
+						{
+							keyPressed = true;
+							this->V[this->x] = i;
+						}
+					}
 					break;
+				}
 				case 0x0015:
 					this->delayTimer = this->V[x];
 					break;
@@ -251,6 +292,7 @@ void Chip8::cpuCycle()
 		}
 		this->soundTimer--;
 	}
+	
 }
 
 void Chip8::draw()
@@ -338,6 +380,54 @@ void Chip8::onKeyPressed()
 			case 27: //ESC
 				this->run = false;
 				return;
+			case 49: //1 -> 1
+				this->keyStatus[0] = 1;
+				break;
+			case 50: //2 -> 2
+				this->keyStatus[1] = 1;
+				break;
+			case 51: //3 -> 3
+				this->keyStatus[2] = 1;
+				break;
+			case 52: //4 -> C
+				this->keyStatus[3] = 1;
+				break;
+			case 113: //Q -> 4
+				this->keyStatus[4] = 1;
+				break;
+			case 119: //W -> 5
+				this->keyStatus[5] = 1;
+				break;
+			case 101: //E -> 6
+				this->keyStatus[6] = 1;
+				break;
+			case 114: //R -> D
+				this->keyStatus[7] = 1;
+				break;	
+			case 97: //A -> 7
+				this->keyStatus[8] = 1;
+				break;
+			case 115: //S -> 8
+				this->keyStatus[9] = 1;
+				break;
+			case 100: //D -> 9
+				this->keyStatus[10] = 1;
+				break;
+			case 102: //F -> E
+				this->keyStatus[11] = 1;
+				break;
+			case 122: //Z -> A
+				this->keyStatus[12] = 1;
+				break;
+			case 120: //X -> 0
+				this->keyStatus[13] = 1;
+				break;
+			case 99: //C -> B
+				this->keyStatus[14] = 1;
+				break;
+			case 118: //V -> F
+				this->keyStatus[15] = 1;
+				break;
 		}
 	}
 }

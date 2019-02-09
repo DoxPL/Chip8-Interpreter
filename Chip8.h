@@ -8,11 +8,12 @@ class Chip8
 		unsigned short index;
 		unsigned short delayTimer;
 		unsigned short soundTimer;
+		unsigned short keyStatus[16];
 		unsigned char V[16];
 		unsigned char memory[4096];
-		unsigned char keyState[16];
 		bool drawStatus;
 		bool run;
+		int x, y;
 		char mtx[64 * 32];
 	public:
 		void init();
