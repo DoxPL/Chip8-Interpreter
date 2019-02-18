@@ -8,6 +8,8 @@
 
 #ifndef Chip8_hpp
 #define Chip8_hpp
+#define HEIGHT 32
+#define WIDTH 64
 
 #include <stdio.h>
 #include <curses.h>
@@ -30,14 +32,13 @@ private:
     unsigned char memory[4096];
     bool drawStatus;
     bool run;
-    int x, y;
-    char mtx[64 * 32];
+    char mtx[HEIGHT * WIDTH];
 public:
     Chip8();
     void init();
     void load(char* filename);
     void draw();
-    void drawSprite();
+    void drawSprite(int x, int y);
     void cpuCycle();
     void memClear();
     void scrClear();

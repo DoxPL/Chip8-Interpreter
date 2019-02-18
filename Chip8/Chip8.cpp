@@ -5,7 +5,6 @@
 //  Created by DoxPL on 16/02/2019.
 //
 #define BLOCK "#"
-#define EMPTYFIELD ""
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -14,7 +13,6 @@
 #include "Chip8.hpp"
 #include <ncurses.h>
 using namespace std;
-
 unsigned char fontSet[80] =
 {
     0xF0, 0x90, 0x90, 0x90, 0xF0, //0
@@ -52,7 +50,6 @@ void Chip8::init()
     this->index = 0;
     this->stackPointer = 0;
     this->drawStatus = false;
-    
     for(int i=0; i < 16; i++)
     {
         V[i] = 0;
@@ -71,7 +68,7 @@ void Chip8::load(char* filename)
     {
         ifstream _file(filename, ios::binary);
         char tmp;
-        for(int i=0x200; static_cast<void>(!_file.eof()), i < 4096; i++)
+        for(int i = 0x200; static_cast<void>(!_file.eof()), i < 4096; i++)
         {
             _file.get(tmp);
             this->memory[i] = tmp;
@@ -97,15 +94,15 @@ void Chip8::cpuCycle()
     opcode = this->memory[this->counter] << 8 | this->memory[this->counter + 1];
     int nnn = opcode & 0x0FFF;
     int nn = opcode & 0x00FF;
-    int n = opcode & 0x000F;
-    this->x = this->V[opcode] & 0x0F00 >> 8;
-    this->y = this->V[opcode] & 0x00F0 >> 4;
+    int x = this->V[opcode] & 0x0F00 >> 8;
+    int y = this->V[opcode] & 0x00F0 >> 4;
     this->counter += 2;
+    
     /* Check opcode hex value of current cycle
     printw("Opcode: 0x%08x\n", opcode);
     refresh();
-    getch();
-     */
+    getch(); */
+     
     switch(opcode & 0xF000)
     {
         case 0x0000:
@@ -223,17 +220,17 @@ void Chip8::cpuCycle()
             this->V[x] = (rand() % 256) & nn;
             break;
         case 0xD000:
-            drawSprite();
+            drawSprite(x, y);
             break;
         case 0xE000:
             switch(opcode & 0x00FF)
             {
                 case 0x009E:
-                    if(this->keyStatus[this->x] == 1)
+                    if(this->keyStatus[x] == 1)
                         this->counter += 2;
                     break;
                 case 0x00A1:
-                    if(this->keyStatus[this->x] != 1)
+                    if(this->keyStatus[x] != 1)
                         this->counter += 2;
                     break;
             }
@@ -252,7 +249,7 @@ void Chip8::cpuCycle()
                         if(this->keyStatus[i] == 1)
                         {
                             keyPressed = true;
-                            this->V[this->x] = i;
+                            this->V[x] = i;
                         }
                     }
                     break;
@@ -329,16 +326,16 @@ void Chip8::draw()
         for(int xline = 0; xline < 64; ++xline)
         {
             if(this->mtx[xline + (64 * yline)])
+            {
                 mvprintw(yline, xline, BLOCK);
-            else
-                mvprintw(yline, xline, EMPTYFIELD);
-            refresh();
+                refresh();
+            }
         }
     }
     this->drawStatus = false;
 }
 
-void Chip8::drawSprite()
+void Chip8::drawSprite(int x, int y)
 {
     unsigned short height = this->opcode & 0x000F;
     unsigned short pixel;
@@ -351,9 +348,10 @@ void Chip8::drawSprite()
         {
             if((pixel & (0x80 >> xline)) != 0)
             {
-                if(mtx[(this->x + xline + ((this->y + yline) * 64))] == 1)
+                int location = x + xline + (y + yline) * 64;
+                if(mtx[location] == 1)
                     V[0xF] = 1;
-                mtx[this->x + xline + ((this->y + yline) * 64)] ^= 1;
+                mtx[location] ^= 1;
             }
         }
     }
@@ -375,7 +373,7 @@ void Chip8::memClear()
 
 void Chip8::scrClear()
 {
-    clear(); 
+    clear();
     refresh();
 }
 
@@ -460,6 +458,8 @@ void Chip8::onKeyPressed()
 
 Chip8::~Chip8()
 {
-    printw("Application stopped");
+    printw("Application terminated. Press any key to exit");
+    refresh();
+    getch();
 }
 

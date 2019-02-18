@@ -18,7 +18,7 @@ int main(int argc, const char * argv[]) {
             c8.scrClear();
             c8.draw();
         }
-        usleep(250000);
+        usleep(200000);
         //c8.onKeyPressed();
     } 
     endwin();
