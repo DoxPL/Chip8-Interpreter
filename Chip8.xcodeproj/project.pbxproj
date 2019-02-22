@@ -138,7 +138,7 @@
 /* Begin PBXShellScriptBuildPhase section */
 		84802B4F2218D05B00B083A4 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
+			buildActionMask = 12;
 			files = (
 			);
 			inputFileListPaths = (
@@ -151,7 +151,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#!/bin/bash\n";
+			shellScript = "#!/bin/bash\nprintf '\\e[8;32;64t'\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

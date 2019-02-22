@@ -4,7 +4,7 @@
 //
 //  Created by DoxPL on 16/02/2019.
 //
-#define BLOCK "#"
+#define BLOCK " "
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -57,6 +57,8 @@ void Chip8::init()
     }
     
     memcpy(this->memory, fontSet, sizeof(fontSet));
+    init_pair(1, COLOR_BLACK, COLOR_GREEN);
+    printf("\e[8;32;64t"); // To set window size
 }
 
 void Chip8::load(char* filename)
@@ -98,7 +100,7 @@ void Chip8::cpuCycle()
     int y = this->V[opcode] & 0x00F0 >> 4;
     this->counter += 2;
     
-    /* Check opcode hex value of current cycle
+    /* Check opcode value in current cycle
     printw("Opcode: 0x%08x\n", opcode);
     refresh();
     getch(); */
@@ -220,7 +222,7 @@ void Chip8::cpuCycle()
             this->V[x] = (rand() % 256) & nn;
             break;
         case 0xD000:
-            drawSprite(x, y);
+            drawSprite();
             break;
         case 0xE000:
             switch(opcode & 0x00FF)
@@ -327,6 +329,7 @@ void Chip8::draw()
         {
             if(this->mtx[xline + (64 * yline)])
             {
+                attron(COLOR_PAIR(1));
                 mvprintw(yline, xline, BLOCK);
                 refresh();
             }
@@ -335,10 +338,12 @@ void Chip8::draw()
     this->drawStatus = false;
 }
 
-void Chip8::drawSprite(int x, int y)
+void Chip8::drawSprite()
 {
     unsigned short height = this->opcode & 0x000F;
     unsigned short pixel;
+    unsigned short x = V[(this->opcode & 0x0F00) >> 8];
+    unsigned short y = V[(this->opcode & 0x00F0) >> 4];
     
     V[0xF] = 0;
     for (int yline = 0; yline < height; yline++)

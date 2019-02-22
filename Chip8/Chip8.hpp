@@ -28,7 +28,7 @@ private:
     unsigned short delayTimer;
     unsigned short soundTimer;
     unsigned short keyStatus[16];
-    unsigned char V[16];
+    unsigned short V[16];
     unsigned char memory[4096];
     bool drawStatus;
     bool run;
@@ -38,7 +38,7 @@ public:
     void init();
     void load(char* filename);
     void draw();
-    void drawSprite(int x, int y);
+    void drawSprite();
     void cpuCycle();
     void memClear();
     void scrClear();

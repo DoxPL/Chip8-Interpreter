@@ -4,6 +4,7 @@ Chip8 c8;
 
 int main(int argc, const char * argv[]) {
     initscr();
+    start_color();
     curs_set(false);
     keypad(stdscr, true);
     noecho();

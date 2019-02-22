@@ -2,6 +2,14 @@
 It's a Chip8 Interpreter written in C++.
 Project not finished yet.
 
+![output with ncurses](https://i.ibb.co/QvNqhCB/screenshot.png)
+
+Update 22.02.2019
+<ul> 
+<li>Fixed sprite displaying</lI>
+<li>Foreground color set</li>
+</ul>
+
 Update 18.02.2019
 <ul> 
 <li>Some changes in code</lI>
