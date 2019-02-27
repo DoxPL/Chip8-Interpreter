@@ -4,6 +4,12 @@ Project not finished yet.
 
 ![output with ncurses](https://i.ibb.co/QvNqhCB/screenshot.png)
 
+
+Update 27.02.2019
+<ul> 
+<li>Timer</li>
+</ul>
+
 Update 22.02.2019
 <ul> 
 <li>Fixed sprite displaying</lI>

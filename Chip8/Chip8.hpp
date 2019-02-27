@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <curses.h>
 #include <unistd.h>
+#include <ctime>
 
 #endif /* Chip8_hpp */
 
@@ -33,17 +34,20 @@ private:
     bool drawStatus;
     bool run;
     char mtx[HEIGHT * WIDTH];
+    clock_t lastTime;
 public:
     Chip8();
     void init();
-    void load(char* filename);
+    void load(char*);
     void draw();
     void drawSprite();
     void cpuCycle();
     void memClear();
     void scrClear();
-    void onKeyPressed();
-    void stop(short opcode);
+    void keyPressed(int);
+    void stop(short);
+    void kbhit();
+    bool update();
     bool getDrawStatus();
     bool getRunState();
     ~Chip8();

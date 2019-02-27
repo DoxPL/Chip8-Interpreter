@@ -8,19 +8,21 @@ int main(int argc, const char * argv[]) {
     curs_set(false);
     keypad(stdscr, true);
     noecho();
+    nodelay(stdscr, true);
     c8.init();
     //Example: "/Users/Admin/Desktop/C8/Chip8/Build/Products/Debug/app.ch8"
-    c8.load( "/Users/Admin/Desktop/C8/Chip8/Build/Products/Debug/app.ch8" );
+    c8.load( "/Users/Admin/Desktop/C8/Chip8/Build/Products/Debug/mmm.c8" );
     while(c8.getRunState())
     {
-        c8.cpuCycle();
-        if(c8.getDrawStatus())
+        if(c8.update())
         {
-            c8.scrClear();
-            c8.draw();
+            if(c8.getDrawStatus())
+            {
+                c8.scrClear();
+                c8.draw();
+            }
         }
-        usleep(200000);
-        //c8.onKeyPressed();
+        c8.kbhit();
     } 
     endwin();
     return 0;

@@ -5,6 +5,7 @@
 //  Created by DoxPL on 16/02/2019.
 //
 #define BLOCK " "
+#define FRAMES_PER_SEC 10
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -12,6 +13,7 @@
 #include <ctime>
 #include "Chip8.hpp"
 #include <ncurses.h>
+
 using namespace std;
 unsigned char fontSet[80] =
 {
@@ -59,6 +61,7 @@ void Chip8::init()
     memcpy(this->memory, fontSet, sizeof(fontSet));
     init_pair(1, COLOR_BLACK, COLOR_GREEN);
     printf("\e[8;32;64t"); // To set window size
+    this->lastTime = clock();
 }
 
 void Chip8::load(char* filename)
@@ -399,10 +402,8 @@ bool Chip8::getRunState()
     return this->run;
 }
 
-void Chip8::onKeyPressed()
+void Chip8::keyPressed(int key)
 {
-    char key = getch();
-    
     switch(key)
     {
         case 27: //ESC
@@ -460,6 +461,29 @@ void Chip8::onKeyPressed()
             break;
     }
 }
+
+void Chip8::kbhit()
+{
+    int input = getch();
+    if(input != ERR)
+    {
+        ungetch(input);
+        keyPressed(input);
+    }
+}
+
+bool Chip8::update()
+{
+    clock_t currentTime = clock();
+    if((currentTime - this->lastTime) >= (200000 / FRAMES_PER_SEC))
+    {
+        cpuCycle();
+        this->lastTime = currentTime;
+        return true;
+    }
+    return false;
+}
+
 
 Chip8::~Chip8()
 {
